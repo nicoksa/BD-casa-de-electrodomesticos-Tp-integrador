@@ -1,0 +1,552 @@
+CREACION DE TABLAS
+
+CREATE DATABASE TP_INTEGRADOR_LABORATORIO_GRUPO3
+GO
+
+
+USE TP_INTEGRADOR_LABORATORIO_GRUPO3
+GO
+
+-- Tabla Provincias
+
+CREATE TABLE Provincias
+(
+    Cod_Provincia CHAR(4) NOT NULL,
+    Descripcion_Provincia VARCHAR(50) NOT NULL,
+    CONSTRAINT PK_Provincias PRIMARY KEY (Cod_Provincia)
+)
+GO
+	
+-- Tabla Localidades
+
+CREATE TABLE Localidades
+(
+    CodProvincia_Loc CHAR(4) NOT NULL,
+    CodPostal_Loc CHAR(10) NOT NULL,
+    Descripcion_Loc VARCHAR(50) NOT NULL,
+    CONSTRAINT PK_Localidades PRIMARY KEY (CodProvincia_Loc, CodPostal_Loc),
+    CONSTRAINT FK_Localidades_Provincias FOREIGN KEY (CodProvincia_Loc) REFERENCES Provincias(Cod_Provincia)
+)
+GO
+
+-- Tabla Proveedores
+
+CREATE TABLE Proveedores
+(
+    Cod_Prov CHAR(4) NOT NULL,
+	CodProvincia_Prov CHAR(4) NOT NULL,
+    CodPostal_Prov CHAR(10) NOT NULL,
+	RazonSocial_Prov VARCHAR(50) NOT NULL,
+    Direccion_Prov VARCHAR(50) NOT NULL,
+    Contacto_Prov VARCHAR(50) NOT NULL,
+    CUIT_Prov CHAR(12) NOT NULL,
+    Email_Prov VARCHAR(50) NOT NULL,
+    Telefono_Prov VARCHAR(20) NOT NULL,
+    Web_Prov VARCHAR(50) NULL,
+    
+    CONSTRAINT PK_Proveedores PRIMARY KEY (Cod_Prov),
+    CONSTRAINT FK_Proveedores_Localidades FOREIGN KEY (CodProvincia_Prov,CodPostal_Prov) REFERENCES Localidades(CodProvincia_Loc,CodPostal_Loc),
+)
+GO
+
+
+-- Tabla Categorias
+
+CREATE TABLE Categorias
+(
+    Cod_Cat CHAR(4) NOT NULL,
+    Descripcion_Cat VARCHAR(50) NOT NULL,
+    CONSTRAINT PK_Categorias PRIMARY KEY (Cod_Cat)
+)
+GO
+
+-- Tabla Articulos
+
+CREATE TABLE Articulos
+(
+	CodProv_Art CHAR(4) NOT NULL,
+    Cod_Art CHAR(4) NOT NULL,
+    Descripcion_Art VARCHAR(50) NOT NULL,
+    Stock_Art INT NOT NULL DEFAULT 0 CHECK (Stock_Art>=0),
+    PrecioUnitario_Art MONEY NOT NULL DEFAULT 0,
+    CodCat_Art CHAR(4) NOT NULL,
+    CONSTRAINT PK_Articulos PRIMARY KEY (CodProv_Art,Cod_Art),
+    CONSTRAINT FK_Articulos_Categorias FOREIGN KEY (CodCat_Art) REFERENCES Categorias(Cod_Cat),
+    CONSTRAINT FK_Articulos_Proveedores FOREIGN KEY (CodProv_Art) REFERENCES Proveedores(Cod_Prov)
+)
+GO
+
+-- Tabla Generos
+
+
+CREATE TABLE Generos
+( 
+cod_Gen CHAR(4) NOT NULL,
+descripcion_Gen VARCHAR(20)
+CONSTRAINT PK_GENEROS PRIMARY KEY (cod_Gen)
+)
+GO
+
+-- Tabla Clientes
+
+
+CREATE TABLE Clientes
+(
+    Dni_Cli CHAR(12) NOT NULL,
+    Nombre_Cli VARCHAR(50) NOT NULL,
+    Apellido_Cli VARCHAR(50) NOT NULL,
+    Direccion_Cli VARCHAR(100) NOT NULL,
+    Telefono_Cli VARCHAR(20) NOT NULL,
+    Email_Cli VARCHAR(50),
+	FechaNacimiento_Cli DATE NOT NULL,
+	CodProvincia_Cli CHAR(4) NOT NULL,
+    CodPostal_Cli CHAR(10) NOT NULL,
+	CodGen_Cli CHAR(4) NOT NULL,
+    CONSTRAINT PK_Clientes PRIMARY KEY (Dni_Cli),
+    CONSTRAINT FK_Clientes_Localidades FOREIGN KEY (CodProvincia_Cli, CodPostal_Cli) REFERENCES Localidades(CodProvincia_Loc ,CodPostal_Loc),
+	CONSTRAINT FK_CLIENTES_GENEROS FOREIGN KEY (codGen_Cli) REFERENCES Generos(cod_Gen)
+)
+GO
+
+
+
+-- Tabla Vendedores
+
+CREATE TABLE Vendedores
+(
+    Numero_Vend CHAR(4) NOT NULL,
+    Nombre_Vend VARCHAR(50) NOT NULL,
+    Apellido_Vend VARCHAR(50) NOT NULL,
+    Telefono_Vend VARCHAR(20) NOT NULL,
+    Direccion_Vend VARCHAR(50) NOT NULL,
+    Email_Vend VARCHAR(50),
+	codGen_Vend CHAR(4) NOT NULL,
+    CONSTRAINT PK_Vendedores PRIMARY KEY (Numero_Vend),
+	CONSTRAINT FK_VENDEDORES_GENEROS FOREIGN KEY (codGen_Vend) REFERENCES Generos(cod_Gen)
+)
+GO
+-- Tabla Formas_De_Pago
+
+CREATE TABLE Formas_De_Pago
+(
+    Cod_FdP CHAR(4) NOT NULL,
+    Descripcion_FdP VARCHAR(50) NOT NULL,
+    Interes_FdP DECIMAL(5, 2) NOT NULL DEFAULT 0,
+    CONSTRAINT PK_Formas_De_Pago PRIMARY KEY (Cod_FdP)
+)
+GO
+
+-- Tabla Ventas
+
+CREATE TABLE Ventas
+(
+    Cod_Venta CHAR(4) NOT NULL,
+    DniCliente_Venta CHAR(12) NOT NULL,
+    NumeroVend_Venta CHAR(4) NOT NULL,
+    CodFdP_Venta CHAR(4) NOT NULL,
+    Monto_Venta MONEY DEFAULT 0 NOT NULL,
+    Fecha_Venta DATE NOT NULL DEFAULT GETDATE(),
+    CONSTRAINT PK_Ventas PRIMARY KEY (Cod_Venta),
+    CONSTRAINT FK_Ventas_Clientes FOREIGN KEY (DniCliente_Venta) REFERENCES Clientes(Dni_Cli),
+    CONSTRAINT FK_Ventas_Vendedores FOREIGN KEY (NumeroVend_Venta) REFERENCES Vendedores(Numero_Vend),
+    CONSTRAINT FK_Ventas_Formas_De_Pago FOREIGN KEY (CodFdP_Venta) REFERENCES Formas_De_Pago(Cod_FdP)
+)
+GO
+
+-- Tabla Detalle_Ventas
+
+CREATE TABLE Detalle_Ventas
+(
+    CodVenta_DV CHAR(4) NOT NULL,
+    CodProveedor_DV CHAR(4) NOT NULL,
+    CodArticulo_DV CHAR(4) NOT NULL,
+    Cantidad_DV INT NOT NULL,
+    PrecioUnitario_DV MONEY NOT NULL,
+    CONSTRAINT PK_Detalle_Ventas PRIMARY KEY (CodVenta_DV, CodProveedor_DV, CodArticulo_DV),
+    CONSTRAINT FK_Detalle_Ventas_Ventas FOREIGN KEY (CodVenta_DV) REFERENCES Ventas(Cod_Venta),
+    CONSTRAINT FK_Detalle_Ventas_Articulos FOREIGN KEY (CodProveedor_DV, CodArticulo_DV) REFERENCES Articulos(CodProv_Art, Cod_Art)
+)
+GO
+
+
+-- Tabla Pedidos
+
+CREATE TABLE Pedidos
+(
+    Id_Pedido CHAR(4) NOT NULL,
+    CodProveedor_Pedido CHAR(4) NOT NULL,
+    TotalMonto_Pedido MONEY DEFAULT 0 NOT NULL,
+    Fecha_Pedido DATE NOT NULL DEFAULT GETDATE(),
+    Estado_Pedido BIT NOT NULL DEFAULT 0,
+    CONSTRAINT PK_Pedidos PRIMARY KEY (Id_Pedido),
+    CONSTRAINT FK_Pedidos_Proveedores FOREIGN KEY (CodProveedor_Pedido) REFERENCES Proveedores(Cod_Prov)
+)
+GO
+
+--TAbla Detalle_Pedido
+
+CREATE TABLE Detalle_Pedido
+(
+    IdPedido_DP CHAR(4) NOT NULL,
+    CodProv_DP CHAR(4) NOT NULL,
+    CodArt_DP CHAR(4) NOT NULL,
+    CantidadArt_DP INT NOT NULL,
+    PrecioUnitarioArt_DP MONEY NOT NULL,
+    CONSTRAINT PK_Detalle_Pedido PRIMARY KEY (IdPedido_DP, CodProv_DP, CodArt_DP),
+    CONSTRAINT FK_Detalle_Pedido_Pedidos FOREIGN KEY (IdPedido_DP) REFERENCES Pedidos(Id_Pedido),
+    CONSTRAINT FK_Detalle_Pedido_Articulos FOREIGN KEY (CodProv_DP, CodArt_DP) REFERENCES Articulos(CodProv_Art, Cod_Art)
+)
+GO
+
+CARGA DE DATOS
+
+INSERT INTO Provincias (Cod_Provincia, Descripcion_Provincia)
+SELECT 'P001', 'Buenos Aires' UNION
+SELECT 'P002', 'Cordoba' UNION
+SELECT 'P003', 'Santa Fe' UNION
+SELECT 'P004', 'Mendoza' UNION
+SELECT 'P005', 'Entre Rios' UNION
+SELECT 'P006', 'Tierra del Fuego' UNION
+SELECT 'P007', 'Misiones' UNION
+SELECT 'P008', 'Chubut' UNION 
+SELECT 'P009','San Luis' UNION
+SELECT 'P010', 'Salta'
+GO
+
+
+INSERT INTO Localidades (CodProvincia_Loc, CodPostal_Loc, Descripcion_Loc)
+SELECT 'P001', '1000', 'La Plata' UNION
+SELECT 'P002', '5000', 'Córdoba' UNION
+SELECT 'P003', '2000', 'Rosario' UNION
+SELECT 'P004', '5500', 'Mendoza' UNION
+SELECT 'P001', '1001', 'Tandil' UNION
+SELECT 'P001', '1002', 'CABA' UNION
+SELECT 'P002', '5001' , 'Rio Tercero' UNION
+SELECT 'P003', '2001' , 'Rafaela' UNION
+SELECT 'P005', '6000' , 'Concordia' UNION
+SELECT 'P009', '8000' , 'San Luis' UNION
+SELECT 'P006', '9000' , 'Ushuaia'
+GO
+
+
+
+INSERT INTO Proveedores (Cod_Prov, CodPostal_Prov, Direccion_Prov, Contacto_Prov, CUIT_Prov, Email_Prov, Telefono_Prov, Web_Prov, CodProvincia_Prov, RazonSocial_Prov)
+SELECT 'PR01', '1000', 'Av Moreno 3123', 'Juan Lagos', '20304050607', 'juanlagos@prov.com', '154166789', 'www.proveedorjuan.com', 'P001', 'Juan S.A.' UNION
+SELECT 'PR02', '5000', 'Av. Belgrano s/n', 'Maria Gomez', '22334455667', 'marigomez@prov.com', '157654321', 'www.proveedormaria.com', 'P002', 'Maria S.A.' UNION
+SELECT 'PR03', '2000', 'Callao 956', 'Carlos Andrada', '33445566778', 'carlosand@prov.com', '155576585', 'www.proveedorcarlos.com', 'P003', 'Omega S.A.' UNION
+SELECT 'PR04', '5500', '12 de Octubre 2789', 'Belen Gutierrez', '44556677889', 'belengt@prov.com', '1534234644', 'www.proveedorbelen.com', 'P004', 'Yatasto S.A.'
+GO
+  
+
+
+INSERT INTO Categorias (Cod_Cat, Descripcion_Cat)
+SELECT 'C001', 'Cocina y Limpieza' UNION
+SELECT 'C002', 'Accesorios Informaticos' UNION
+SELECT 'C003', 'Telefonos celulares' UNION
+SELECT 'C004', 'Tvs y Reproductores'
+GO
+
+
+INSERT INTO Articulos (Cod_Art, Descripcion_Art, Stock_Art, PrecioUnitario_Art, CodCat_Art, CodProv_Art)
+SELECT 'A001', 'Microondas Philco', 50, 30000, 'C001', 'PR01' UNION
+SELECT 'A002', 'Auricular Inalambrico Sony', 100, 1500, 'C002', 'PR02' UNION
+SELECT 'A003', 'Samsumg A32', 20, 90000, 'C003', 'PR03' UNION
+SELECT 'A004', 'Reproductor de Bluray Philips', 70, 20000, 'C004', 'PR04'
+GO
+
+
+
+INSERT INTO Generos(cod_Gen,descripcion_Gen)
+SELECT 'GNML', 'Masculino' UNION
+SELECT 'GNFM', 'Femenino'
+GO
+
+
+INSERT INTO Clientes (Dni_Cli, Nombre_Cli, Apellido_Cli, Direccion_Cli, Telefono_Cli, Email_Cli, CodPostal_Cli,CodProvincia_Cli,FechaNacimiento_Cli,codGen_Cli)
+SELECT '12345678', 'Juan', 'Gonzalez', 'Taborda 103', '156982981', 'juangonzalez@gmail.com', '1000','P001','20-01-1998','GNML' UNION
+SELECT '23456789', 'Mirna', 'Ruiz', 'Av. Bozan 1456', '234542843', 'mirnaruiz@hotmail.com', '5000','P002','28-03-1973','GNFM' UNION
+SELECT '34567890', 'Luis', 'Araujo', 'Sojo 789', '2344675982', 'luisaraujo@gmail.com', '2000','P003','15-09-2000','GNML' UNION
+SELECT '45678901', 'Micaela', 'Fernandez', 'Alisal 1301', '2344672912', 'micafernandez@gmail.com', '5500','P004','08-08-1996','GNFM' UNION
+SELECT '38672787', 'Nicolas', 'Casarino', 'SanMillan 2627', '2345499904', 'nicolascasarino@gmail.com','1000','P001', '02-01-1995','GNML'
+GO
+
+INSERT INTO Vendedores (Numero_Vend, Nombre_Vend, Apellido_Vend, Telefono_Vend, Direccion_Vend, Email_Vend,codGen_Vend)
+SELECT 'V001', 'Ariel', 'Herrera', '15467829', 'Corrientes 123', 'arielherrera@gmail.com','GNML' UNION
+SELECT 'V002', 'Lucia', 'Diaz', '15367269', 'Misiones 456', 'luciadiaz@hotmail.com','GNFM' UNION
+SELECT 'V003', 'Pedro', 'Gomez', '15564823', 'Rivadavia 789', 'pedrogomez@gmail.com','GNML' UNION
+SELECT 'V004', 'Laura', 'Rodriguez', '15137789', 'San Martin 4101', 'laurarodriguez@gmail.com','GNFM'
+GO
+
+
+INSERT INTO Formas_De_Pago (Cod_FdP, Descripcion_FdP, Interes_FdP)
+SELECT 'FP01', 'Efectivo', 0.00 UNION
+SELECT 'FP02', 'Tarjeta de Crédito', 10.00 
+GO
+
+
+INSERT INTO Ventas (Cod_Venta, DniCliente_Venta, NumeroVend_Venta, CodFdP_Venta, Monto_Venta, Fecha_Venta)
+SELECT 'V001', '12345678', 'V001', 'FP01', 45000, '2024-06-23' UNION
+SELECT 'V002', '23456789', 'V002', 'FP02', 3000, '2024-06-23' UNION
+SELECT 'V003', '34567890', 'V003', 'FP01', 500, '2024-06-23' UNION
+SELECT 'V004', '45678901', 'V004', 'FP02', 8000, '2024-06-23'
+GO
+
+
+INSERT INTO Detalle_Ventas (CodVenta_DV, CodProveedor_DV, CodArticulo_DV, Cantidad_DV, PrecioUnitario_DV)
+SELECT 'V001', 'PR01', 'A001', 2, 30000 UNION
+SELECT 'V002', 'PR02', 'A002', 2, 1500 UNION
+SELECT 'V003', 'PR03', 'A003', 1, 90000 UNION
+SELECT 'V004', 'PR04', 'A004', 4, 20000
+GO
+
+
+INSERT INTO Pedidos (Id_Pedido, CodProveedor_Pedido, TotalMonto_Pedido, Fecha_Pedido, Estado_Pedido)
+SELECT 'P001', 'PR01', 60000, '2024-06-20', 0 UNION
+SELECT 'P002', 'PR02', 3000, '2024-06-21', 1 UNION
+SELECT 'P003', 'PR03', 500, '2024-06-22', 0 UNION
+SELECT 'P004', 'PR04', 8000, '2024-06-23', 0
+GO
+
+
+INSERT INTO Detalle_Pedido (IdPedido_DP, CodProv_DP, CodArt_DP, CantidadArt_DP, PrecioUnitarioArt_DP)
+SELECT 'P001', 'PR01', 'A001', 2, 30000 UNION
+SELECT 'P002', 'PR02', 'A002', 2, 1500 UNION
+SELECT 'P003', 'PR03', 'A003', 5, 100 UNION
+SELECT 'P004', 'PR04', 'A004', 4, 2000
+GO
+
+CONSULTAS
+
+--Monto total en mercaderia/productos
+
+SELECT SUM(Stock_Art * PrecioUnitario_Art) AS 'Total Mercaderia'
+FROM Articulos
+GO
+
+
+--Cantidad de clientes por provincia
+
+SELECT Descripcion_Provincia AS 'Provincia', COUNT(*) AS 'Cantidad de clientes'
+FROM Clientes
+INNER JOIN Provincias ON Cod_Provincia = CodProvincia_Cli
+GROUP BY Descripcion_Provincia
+
+
+---Cantidad de articulos por proveedor
+
+SELECT RazonSocial_Prov AS 'Proveedor', COUNT(*) AS 'Cantidad de Articulos' 
+FROM Proveedores
+INNER JOIN Articulos ON Cod_Prov = CodProv_Art
+GROUP BY RazonSocial_Prov
+
+
+--- Ventas por Categorias de articulos
+
+SELECT  Cod_Cat AS 'Codigo' ,Descripcion_Cat AS 'Categoria', SUM(Cantidad_DV) AS 'Cantidad Vendida'
+FROM Categorias
+INNER JOIN Articulos ON Cod_Cat = CodCat_Art
+INNER JOIN Detalle_Ventas ON CodArticulo_DV = Cod_Art
+GROUP BY Cod_Cat,Descripcion_Cat
+
+
+
+PROCEDIMIENTOS ALMACENADOS
+
+--Procedimiento que trae los articulos mayores a determinado stock
+
+CREATE PROCEDURE sp_ArticulosPorStock
+    @StockMinimo INT
+AS
+BEGIN
+    SELECT Cod_Art AS 'CodigoArticulo',Descripcion_Art AS 'DescripcionArticulo',
+        Stock_Art AS 'StockActual',PrecioUnitario_Art AS 'PrecioUnitario'
+    FROM  Articulos
+	WHERE Stock_Art > @StockMinimo                           
+END
+GO
+
+
+EXECUTE sp_ArticulosPorStock 10
+
+
+--Provincia y Localidad de Clientes con al menos una compra y cantidad de compras por clientes
+
+ALTER TABLE CLientes
+ADD CantidadCompras_Cli INT 
+GO
+
+
+CREATE PROCEDURE SP_CantidadCompras
+AS
+	UPDATE Clientes
+	SET CantidadCompras_Cli = (SELECT COUNT(*) FROM Ventas WHERE Dni_Cli=DniCliente_Venta)
+
+	SELECT Nombre_Cli + ' ' + Apellido_Cli AS 'Nombre y Apellido', Descripcion_Provincia AS 'Provincia',Descripcion_Loc AS 'Localidad', 
+		CantidadCompras_Cli AS 'Cantidad de compras' 
+	FROM Clientes
+	INNER JOIN Provincias ON Cod_Provincia = CodProvincia_Cli
+	INNER JOIN Localidades ON CodPostal_Cli = CodPostal_Loc
+	WHERE Dni_Cli IN (SELECT DniCliente_Venta FROM Ventas)
+GO
+
+EXECUTE SP_CantidadCompras
+
+ALTER TABLE Clientes
+DROP COLUMN CantidadCompras_Cli
+GO
+
+
+ 
+--- Nombre y apellido del cliente mas joven
+
+ALTER TABLE CLIENTES
+ADD edad_Cli INT
+
+CREATE PROCEDURE Sp_ClientesMasJoven
+AS
+	update Clientes 
+	set edad_CLI = datediff(year, FechaNacimiento_Cli, getdate()) -
+		case 
+		when month(FechaNacimiento_Cli)>month (getdate()) or month(FechaNacimiento_Cli)= month (getdate()) and day(FechaNacimiento_Cli)> day (getdate())
+		then 1 
+	else 0
+	end
+	SELECT Nombre_Cli + ' ' + Apellido_Cli AS 'Nombre Completo', edad_Cli AS 'Edad'
+	FRom Clientes
+	WHERE edad_Cli = (SELECT MIN(edad_Cli) FROM Clientes)
+GO
+
+EXECUTE Sp_ClientesMasJoven
+
+
+ALTER TABLE Clientes
+DROP COLUMN edad_Cli
+GO
+
+---Clientes de mayor edad
+
+ALTER TABLE CLIENTES
+ADD edad_Cli INT
+
+CREATE PROCEDURE SP_ClientesMayorEdad
+AS
+	UPDATE Clientes
+	SET edad_Cli = CASE 
+					WHEN MONTH(FechaNacimiento_Cli) < MONTH (GETDATE()) OR MONTH(FechaNacimiento_Cli) = MONTH(GETDATE()) AND DAY(FechaNacimiento_Cli)< DAY(GETDATE())
+						THEN DATEDIFF(YEAR,FechaNacimiento_Cli,GETDATE()) - 1
+						ELSE DATEDIFF(YEAR,FechaNacimiento_Cli,GETDATE())
+						END
+	SELECT Nombre_Cli + ' ' + Apellido_Cli AS 'Nombre y apellido' ,edad_Cli AS 'Edad'
+	FROM Clientes
+	WHERE edad_Cli = (SELECT MAX(edad_Cli) FROM Clientes)	
+GO
+
+EXECUTE SP_ClientesMayorEdad
+
+ALTER TABLE Clientes
+DROP COLUMN edad_Cli 
+GO
+
+
+----- Razon Social, localidad y provincia del Proveedor al que se le realizo la mayor cantidad de pedidos 
+
+ALTER TABLE Proveedores
+ADD CantidadPedidos_Prov INT 
+GO
+
+CREATE PROCEDURE Sp_ProveedorPedidos
+AS
+	UPDATE Proveedores
+	SET CantidadPedidos_Prov = (SELECT COUNT(*) FROM Pedidos WHERE Cod_Prov = CodProveedor_Pedido)
+
+	SELECT RazonSocial_Prov AS 'Proveedor', Descripcion_Loc AS 'Localidad', Descripcion_Provincia AS 'Provincia' 
+	FROM Proveedores
+	INNER JOIN Localidades ON CodPostal_Loc = CodPostal_Prov
+	INNER JOIN Provincias ON Cod_Provincia = CodProvincia_Loc
+	WHERE CantidadPedidos_Prov = (SELECT MAX(CantidadPedidos_Prov) FROM Proveedores )
+
+GO
+
+
+EXECUTE Sp_ProveedorPedidos
+
+
+
+TRIGGERS
+
+--Actualizar stock despues de una venta
+
+CREATE TRIGGER tr_ActualizarStock
+ON Detalle_Ventas
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON
+    UPDATE Articulos
+    SET Stock_Art = Stock_Art -(SELECT Cantidad_DV FROM inserted)
+    FROM Articulos 
+	WHERE Cod_Art = (SELECT CodArticulo_DV FROM inserted) AND CodProv_Art = (SELECT CodProveedor_DV FROM inserted)
+END
+GO
+
+
+
+
+
+
+--Actualizar monto de la venta 
+
+
+CREATE TRIGGER tr_ActualizarMontoVenta
+ON Detalle_Ventas
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON
+    UPDATE Ventas
+	
+    SET Monto_Venta = Monto_Venta + (SELECT Cantidad_DV * PrecioUnitario_DV FROM inserted)        
+               
+    WHERE Cod_Venta IN (SELECT CodVenta_DV FROM inserted)
+END
+GO
+
+
+
+--OPCION 2 Actualizar monto de la venta con forma de pago incluida 
+
+
+CREATE TRIGGER tr_ActualizarMontoVenta
+ON Detalle_Ventas
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON
+    UPDATE Ventas	
+    SET Monto_Venta = Monto_Venta + (SELECT Cantidad_DV * PrecioUnitario_DV FROM inserted) *
+			case	
+				when CodFdP_Venta = 'FP02'
+				THEN 1.10 
+				ELSE 1
+			END		  
+    WHERE Cod_Venta IN (SELECT CodVenta_DV FROM inserted)
+END
+GO
+--Actualizar stock segun estado de pedido
+
+
+CREATE TRIGGER tr_ConfirmarPedido
+ON Pedidos
+AFTER UPDATE
+AS
+    SET NOCOUNT ON
+    IF UPDATE(Estado_Pedido)
+    BEGIN
+        UPDATE Articulos
+        SET Stock_Art = Stock_Art + CantidadArt_DP
+        FROM Articulos 
+        INNER JOIN Detalle_Pedido  ON Cod_Art = CodArt_DP AND CodProv_Art = CodProv_DP
+        WHERE (SELECT Estado_Pedido FROM inserted WHERE Id_Pedido = IdPedido_DP)=1 AND  (SELECT Estado_Pedido FROM deleted) = 0
+    END
+
+GO
